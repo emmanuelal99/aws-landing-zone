@@ -1,0 +1,56 @@
+{
+    "tags": {
+        "Project": {
+            "tag_key": {
+                "@@assign": "Project"
+            },
+            "tag_value": {
+                "@@assign": [
+                    "Portfolio"
+                ]
+            },
+            "enforced_for": {
+                "@@assign": [
+                    "ec2:instance",
+                    "ec2:volume",
+                    "ec2:vpc",
+                    "ec2:subnet",
+                    "ec2:security-group"
+                ]
+            }
+        },
+        "Owner": {
+            "tag_key": {
+                "@@assign": "Owner"
+            },
+            "tag_value": {
+                "@@assign": [
+                    "Emmy"
+                ]
+            }
+        },
+        "Env": {
+            "tag_key": {
+                "@@assign": "Env"
+            },
+            "tag_value": {
+                "@@assign": [
+                    "Dev",
+                    "Security",
+                    "Sandbox",
+                    "Workloads",
+                    "Management"
+                ]
+            },
+            "enforced_for": {
+                "@@assign": [
+                    "ec2:instance",
+                    "ec2:volume",
+                    "ec2:vpc",
+                    "ec2:subnet",
+                    "ec2:security-group"
+                ]
+            }
+        }
+    }
+}

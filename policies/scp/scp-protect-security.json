@@ -1,0 +1,34 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ProtectSecurityServices",
+            "Effect": "Deny",
+            "Action": [
+                "cloudtrail:StopLogging",
+                "cloudtrail:DeleteTrail",
+                "cloudtrail:UpdateTrail",
+                "cloudtrail:PutEventSelectors",
+                "guardduty:DeleteDetector",
+                "guardduty:UpdateDetector",
+                "guardduty:DisassociateFromAdministratorAccount",
+                "guardduty:DisassociateFromMasterAccount",
+                "config:StopConfigurationRecorder",
+                "config:DeleteConfigurationRecorder",
+                "config:DeleteDeliveryChannel",
+                "securityhub:DisableSecurityHub",
+                "securityhub:DisassociateFromAdministratorAccount",
+                "access-analyzer:DeleteAnalyzer"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "ArnNotLike": {
+                    "aws:PrincipalArn": [
+                        "arn:aws:iam::*:role/aws-reserved/sso.amazonaws.com/*AWSReservedSSO_Admin_*",
+                        "arn:aws:iam::*:role/OrganizationAccountAccessRole"
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyLeavingOrganization",
+            "Effect": "Deny",
+            "Action": "organizations:LeaveOrganization",
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyLongLivedIamCredentials",
+            "Effect": "Deny",
+            "Action": [
+                "iam:CreateUser",
+                "iam:CreateAccessKey",
+                "iam:CreateLoginProfile"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "RequireProjectTagOnNewInstances",
+            "Effect": "Deny",
+            "Action": "ec2:RunInstances",
+            "Resource": "arn:aws:ec2:*:*:instance/*",
+            "Condition": {
+                "Null": {
+                    "aws:RequestTag/Project": "true"
+                }
+            }
+        }
+    ]
+}
