@@ -1,11 +1,11 @@
-# Terraform state and variables can contain secrets and account details
+# Terraform state and variables
 .terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars
 crash.log
 
-# Prowler and other scan output (lists your resources and weaknesses)
+# Prowler and other scan output 
 output/
 *.csv
 *.html
