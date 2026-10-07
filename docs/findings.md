@@ -33,3 +33,24 @@ it and added it as `policies/scp/scp-deny-leave-and-close.json`.
 **Lesson:** Tag policies are preventive for known keys only. A detective control
 (AWS Config `required-tags` rule or a scheduled tagging-API sweep) is needed to catch
 look-alike keys.
+
+## F-002: Default cost anomaly alert could not fire for this account
+
+**Found during:** Cost Anomaly Detection setup process
+**Severity:** Medium (a detective control that looked enabled but was effectively off)
+
+**Observation:** AWS auto-created `Default-Services-Monitor` with a subscription
+threshold of `$100 AND 40%`, sent only to the root account email.
+
+**Root cause:** AWS defaults are sized for accounts with meaningful spend. With a
+baseline of pennies per day, an anomaly would need to exceed $100 *and* 40% before
+alerting, by which point a leaked-credential or forgotten-resource incident would
+already be costly. Alerts also went to an inbox not monitored day to day.
+
+**Remediation:** Renamed the monitor (`portfolio-services-monitor`) and subscription
+(`portfolio-anomaly-alerts`), set a single absolute threshold of $3 (percentage removed
+to avoid alert fatigue on a near-zero baseline), added a monitored inbox, and applied
+the standard tags. Monitor history was kept by editing instead of recreating.
+
+**Lesson:** "Enabled" is not the same as "effective". Defaults must be checked against
+the environment's actual risk profile.
