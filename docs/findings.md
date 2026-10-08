@@ -5,7 +5,7 @@ Issues discovered while building and testing the landing zone, with root cause a
 ## F-001: Look-alike tag keys on an SCP
 
 **Found during:** activating cost allocation tags process.
-**Severity:** Low (governance/hygiene, no cost impact; SCPs are not billable)
+**Severity:** Low (governance/hygiene, no cost impact; SCPs are not billable).
 
 **Observation:** Cost allocation tags listed `Project ` and `Env ` (trailing space)
 alongside the correct keys `Project` and `Env`.
@@ -67,8 +67,7 @@ list networks (DescribeVpcs) in us-east-1 was also denied.
 
 **What the logs showed:** All five denied actions were found in the organisation's
 central log bucket in the Security account, recording who tried, what they tried,
-when, and why it was denied. Each error message also named the exact SCP that blocked the action (the region lock), which confirms that the block came from the organisation-wide rule, not from missing IAM
-   permissions.
+when, and why it was denied. Each error message also named the exact SCP that blocked the action (the region lock), which confirms that the block came from the organisation-wide rule, not from missing IAM permissions.
 
 **Why this matters:**
 - SCPs limit every role in a member account, including Admin.
