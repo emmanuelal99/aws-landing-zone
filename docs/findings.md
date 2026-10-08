@@ -54,3 +54,28 @@ the standard tags. Monitor history was kept by editing instead of recreating.
 
 **Lesson:** "Enabled" is not the same as "effective". Defaults must be checked against
 the environment's actual risk profile.
+
+## F-003: Region lock blocks investigation in other regions, but central logs keep the evidence
+
+**Found during:** checking that blocked actions are logged
+**Severity:** Informational (the control works as designed; the trade-off is recorded)
+
+**What happened:** In the Dev account, the Admin role tried to view CloudTrail Event
+history in us-east-1. The request was denied four times by the region lock SCP, even
+though Admin has full permissions. A separate test with the Developer role trying to
+list networks (DescribeVpcs) in us-east-1 was also denied.
+
+**What the logs showed:** All five denied actions were found in the organisation's
+central log bucket in the Security account, recording who tried, what they tried,
+when, and why it was denied. Each error message also named the exact SCP that blocked the action (the region lock), which confirms that the block came from the organisation-wide rule, not from missing IAM
+   permissions.
+
+**Why this matters:**
+- SCPs limit every role in a member account, including Admin.
+- The region lock blocks reading as well as creating, so even viewing data in other
+  regions is denied.
+- The people being monitored cannot reach the evidence. Logs are stored in a separate
+  account that Dev users cannot access, change or delete.
+
+**Trade-off:** Investigating activity in another region cannot be done from inside a
+member account. It must be done from the central log bucket in the Security account.
