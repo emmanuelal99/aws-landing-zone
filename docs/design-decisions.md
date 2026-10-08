@@ -2,7 +2,7 @@
 
 This file explains the main design decisions for the AWS landing zone, including the
 alternatives considered, the reasons for each choice and the trade-offs involved. The
-landing zone is a learning and portfolio project: the final environment will be
+landing zone is a personal project: the final environment will be
 validated, imported into Terraform and tested before teardown.
 
 ## D-001: Build AWS Organizations manually instead of using AWS Control Tower
@@ -11,7 +11,7 @@ validated, imported into Terraform and tested before teardown.
 logging manually using AWS Organizations. The completed environment will then be imported
 into Terraform.
 
-**Context:** This is a learning and portfolio project with four main goals:
+**Context:** This is a small production-style landing zone project with four main goals:
 
 - Understand how each security control works
 - Keep costs as low as possible
@@ -57,7 +57,7 @@ project still apply.
 
 ## D-002: Use one Security account for logs and security tooling
 
-**Decision:** Use a single Security account for the central CloudTrail log bucket and
+**Decision:** A single Security account is used for the central CloudTrail log bucket and
 security services.
 
 **Why:** This keeps the project simple and reduces the number of accounts that need to be
