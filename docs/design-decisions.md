@@ -1,11 +1,8 @@
 # Design Decisions
 
-This file explains the main design decisions for the AWS landing zone, including the
-alternatives considered, the reasons for each choice and the trade-offs involved. The
-landing zone is a personal project: the final environment will be
-validated, imported into Terraform and tested before teardown.
+Key decisions made while building this landing zone, with alternatives considered.
 
-## D-001: Build AWS Organizations manually instead of using AWS Control Tower
+## D-001: AWS Organizations built manually instead of using AWS Control Tower
 
 **Decision:** Build the AWS Organization, OUs, SCPs, organization CloudTrail and central
 logging manually using AWS Organizations. The completed environment will then be imported
