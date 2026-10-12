@@ -1,6 +1,6 @@
 # Findings
 
-Issues discovered while building and testing the landing zone, with root cause and remediation.
+Issues found during landing zone setup and testing, along with their causes and fixes.
 
 ## F-001: Look-alike tag keys on an SCP
 
@@ -22,7 +22,7 @@ catch it because:
 2. The tag policy is attached to OUs, not the management account where SCPs live.
 3. `organizations:policy` is not in `enforced_for`.
 
-**Remediation:** Removed the bad keys, added the correct ones, and re-ran the search
+**Fix:** Removed the bad keys, added the correct ones, and re-ran the search
 (no results). Only the clean keys were activated as cost allocation tags.
 
 **Related:** The SCP inventory also found an untracked root-level SCP
@@ -42,12 +42,9 @@ look-alike keys.
 **Observation:** AWS auto-created `Default-Services-Monitor` with a subscription
 threshold of `$100 AND 40%`, sent only to the root account email.
 
-**Root cause:** AWS defaults are sized for accounts with meaningful spend. With a
-baseline of pennies per day, an anomaly would need to exceed $100 *and* 40% before
-alerting, by which point a leaked-credential or forgotten-resource incident would
-already be costly. Alerts also went to an inbox not monitored day to day.
+**Root cause:** AWS defaults are sized for accounts with meaningful spend. With daily costs of only pennies, an anomaly would need to exceed $100 and 40% before triggering an alert, meaning a leaked credential or forgotten resource could already become costly.
 
-**Remediation:** Renamed the monitor (`portfolio-services-monitor`) and subscription
+**Fix:** Renamed the monitor (`portfolio-services-monitor`) and subscription
 (`portfolio-anomaly-alerts`), set a single absolute threshold of $3 (percentage removed
 to avoid alert fatigue on a near-zero baseline), added a monitored inbox, and applied
 the standard tags. Monitor history was kept by editing instead of recreating.
