@@ -5,7 +5,7 @@
 *.tfvars
 crash.log
 
-# Prowler and other scan output 
+# Prowler and other scan output
 output/
 *.csv
 *.html
