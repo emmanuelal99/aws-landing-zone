@@ -4,7 +4,7 @@ Key decisions made while building this landing zone, with alternatives considere
 
 ## D-001: AWS Organizations built manually instead of using AWS Control Tower
 
-**Decision:** Build the AWS Organization, OUs, SCPs, organization CloudTrail and central
+**Decision:** Building the AWS Organization, OUs, SCPs, organization CloudTrail and central
 logging manually using AWS Organizations. The completed environment will then be imported
 into Terraform.
 
@@ -19,7 +19,7 @@ into Terraform.
 
 - **Understanding:** Building the landing zone manually makes it easier to understand and
   explain each SCP, bucket policy, CloudTrail setting and other control.
-- **Cost:** Control Tower uses AWS Config as part of its governance model. AWS Config can
+- **Cost:** Control Tower uses AWS Config as part of its governance model; however, AWS Config can
   create additional costs, so this project keeps the initial setup smaller and limits
   configuration monitoring.
 - **Infrastructure as Code:** Control Tower manages many resources through CloudFormation
@@ -31,7 +31,7 @@ into Terraform.
   designed specifically for the project.
 
 **Trade-offs:** The project does not have Control Tower features such as automated account
-provisioning or a managed control library. Instead, security and configuration are checked
+provisioning or a managed control library. Rather, security and configuration are checked
 using:
 
 - AWS Organizations and SCPs
@@ -52,7 +52,7 @@ project still apply.
 | Audit account | Security account with delegated security administration and audit access |
 | Account Factory | AWS Organizations account creation with OU, tag and SCP controls |
 
-## D-002: Use one Security account for logs and security tooling
+## D-002: Using one Security account for logs and security tooling
 
 **Decision:** A single Security account is used for the central CloudTrail log bucket and
 security services.
