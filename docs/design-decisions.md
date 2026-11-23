@@ -104,3 +104,19 @@ are denied too.
 
 The management account is not covered by this SCP because SCPs do not apply to the AWS
 Organizations management account.
+
+## D-005: GuardDuty enabled for the whole organisation, managed from the Security account
+
+**Decision:** GuardDuty is enabled in eu-west-2 for every account in the organisation. The Security account is the delegated administrator, so all findings are viewed and managed there.
+
+**Enabled:** foundational detection (CloudTrail, VPC flow logs, DNS logs), S3 Protection, EKS audit log monitoring, RDS protection and Lambda protection. Plans with nothing to monitor cost nothing, and they protect any future resource from the start.
+
+**Not enabled:**
+- Runtime Monitoring (EC2, ECS, EKS and its infrastructure): it installs an agent on servers and creates VPC endpoints, which would change the network design and add cost.
+- AI Protection: no AI services are in use, and it adds a CloudTrail service-linked channel to every account.
+
+These can be enabled when a workload needs them.
+
+**Why the Security account:** threat detection is managed outside the management account, which follows the same separation as D-002.
+
+**Cost control:** each account has a 30-day free trial. The GuardDuty Usage page is reviewed before the trial ends.

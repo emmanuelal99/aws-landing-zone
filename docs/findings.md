@@ -75,3 +75,47 @@ when, and why it was denied. Each error message also named the exact SCP that bl
 
 **Trade-off:** Investigating activity in another region cannot be done from inside a
 member account. It must be done from the central log bucket in the Security account.
+
+## F-004: Private subnet not associated with its route table
+
+**Found during:** Step 6.7 (Session Manager connection failed with TargetNotConnected)
+**Severity:** Low (availability issue; failed safe)
+
+**What happened:** The SSM agent could not reach Systems Manager ("i/o timeout").
+Diagnosis showed the NAT, internet gateway, security group and DNS were all correct,
+but the private subnet had never been associated with portfolio-private-rt. It was
+silently using the VPC's main route table, which only has the local route.
+
+**Fix:** Associated portfolio-private-a with portfolio-private-rt and rebooted. The
+agent registered within minutes.
+
+**Lesson:** Subnets without an explicit association use the main route table. Keeping
+the main route table local-only means this mistake fails safe (no internet access)
+rather than exposing the subnet.
+
+## F-005: Session Manager not ready straight after the NAT is turned on
+
+**What happened:** After running `nat-on.sh`, `aws ssm start-session` failed with `TargetNotConnected`, even though `describe-instance-information` showed the instance as `Online`.
+
+**Cause:** The SSM agent uses two separate connections. The status connection (which sets `Online`) came back first. The session connection (`ssmmessages`) has its own retry timer, which gets longer after each failed attempt, so it reconnected later.
+
+**Fix:** Rebooting the instance reset both connections. Sessions worked straight after the agent came back.
+
+**Lesson:** `Online` does not mean a session will work. After turning the NAT on, either reboot the instance or wait a few minutes before starting a session.
+
+## F-006: Media images did not load through CloudFront
+
+**What happened:** Images uploaded through the admin page were saved to S3 but showed as broken on the public site.
+
+**Cause 1: wrong S3 address.** The CloudFront S3 origin used the global S3 endpoint (`bucket.s3.amazonaws.com`). S3 answered with `307` and `AuthorizationHeaderMalformed`: the request was signed for `eu-west-2` but reached the `us-east-1` endpoint.
+**Fix 1:** The origin was changed to the regional endpoint (`bucket.s3.eu-west-2.amazonaws.com`).
+
+**Cause 2: one wrong character in the bucket policy.** The distribution ID contains the letter `O`. The bucket policy was typed with a zero (`0`), so the `AWS:SourceArn` condition never matched and S3 returned `403 AccessDenied`.
+**Fix 2:** The policy was corrected using the ID returned by `aws cloudfront list-distributions`.
+
+**Evidence of the final state:** The image returns `200` through CloudFront and `403` when requested directly from S3. The bucket stays private and is readable only through the distribution.
+
+**Lessons:**
+- Always use the regional S3 endpoint for CloudFront origins. In Terraform, use `bucket_regional_domain_name`.
+- Never type resource IDs by hand. Copy them from the CLI or console. In Terraform, reference the distribution's `.arn` directly.
+- The error came from the policy failing closed: a mistake blocked all access instead of opening it.
