@@ -1,0 +1,34 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyInsecureTransport",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::portfolio-media-<DEV_ACCOUNT_ID>-eu-west-2-an",
+                "arn:aws:s3:::portfolio-media-<DEV_ACCOUNT_ID>-eu-west-2-an/*"
+            ],
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
+                }
+            }
+        },
+        {
+            "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+            },
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::portfolio-media-<DEV_ACCOUNT_ID>-eu-west-2-an/*",
+            "Condition": {
+                "StringEquals": {
+                    "AWS:SourceArn": "arn:aws:cloudfront::<DEV_ACCOUNT_ID>:distribution/<DISTRIBUTION_ID>"
+                }
+            }
+        }
+    ]
+}
