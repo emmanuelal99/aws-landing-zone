@@ -71,10 +71,7 @@ separate issues was much smaller.
 
 ## Evidence
 
-Screenshots (with account numbers and emails blurred) are in `evidence/`. Raw scan
-reports are not published, because they list every resource and weakness in the accounts.
-
-
+Screenshots of every scan, before and after fixes, are in the [evidence gallery](evidence/README.md#security-review-prowler). Account IDs and file paths are covered. Raw scan reports are not published, because they list every resource and weakness in the accounts.
 
 ## Dev account scan (Phase 9)
 

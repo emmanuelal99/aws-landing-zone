@@ -34,6 +34,8 @@ it and added it as `policies/scp/scp-deny-leave-and-close.json`.
 (AWS Config `required-tags` rule or a scheduled tagging-API sweep) is needed to catch
 look-alike keys.
 
+**Evidence:** [look-alike tag keys](evidence/README.md#guardrails-scps-and-tag-policy)
+
 ## F-002: Default cost anomaly alert could not fire for this account
 
 **Found during:** Cost Anomaly Detection setup process
@@ -51,6 +53,8 @@ the standard tags. Monitor history was kept by editing instead of recreating.
 
 **Lesson:** "Enabled" is not the same as "effective". Defaults must be checked against
 the environment's actual risk profile.
+
+**Evidence:** [cost anomaly alerts](evidence/README.md#cost)
 
 ## F-003: Region lock blocks investigation in other regions, but central logs keep the evidence
 
@@ -76,6 +80,8 @@ when, and why it was denied. Each error message also named the exact SCP that bl
 **Trade-off:** Investigating activity in another region cannot be done from inside a
 member account. It must be done from the central log bucket in the Security account.
 
+**Evidence:** [denied calls in the central log bucket](evidence/README.md#logging), [SCP test B](evidence/README.md#guardrails-scps-and-tag-policy)
+
 ## F-004: Private subnet not associated with its route table
 
 **Found during:** Step 6.7 (Session Manager connection failed with TargetNotConnected)
@@ -93,32 +99,38 @@ agent registered within minutes.
 the main route table local-only means this mistake fails safe (no internet access)
 rather than exposing the subnet.
 
-## F-005: Session Manager not ready straight after the NAT is turned on
+**Evidence:** [private route table association](evidence/README.md#network)
 
-**What happened:** After running `nat-on.sh`, `aws ssm start-session` failed with `TargetNotConnected`, even though `describe-instance-information` showed the instance as `Online`.
+## F-005 and F-006: moved to the portfolio repository
 
-**Cause:** The SSM agent uses two separate connections. The status connection (which sets `Online`) came back first. The session connection (`ssmmessages`) has its own retry timer, which gets longer after each failed attempt, so it reconnected later.
+These two findings are about the portfolio workload, not the platform, so they are recorded with the workload:
 
-**Fix:** Rebooting the instance reset both connections. Sessions worked straight after the agent came back.
+- **F-005** is now [P-001: Session Manager not ready straight after the NAT is turned on](https://github.com/emmanuelal99/secure-django-portfolio/blob/main/docs/findings.md#p-001-session-manager-not-ready-straight-after-the-nat-is-turned-on)
+- **F-006** is now [P-002: Media images did not load through CloudFront](https://github.com/emmanuelal99/secure-django-portfolio/blob/main/docs/findings.md#p-002-media-images-did-not-load-through-cloudfront)
 
-**Lesson:** `Online` does not mean a session will work. After turning the NAT on, either reboot the instance or wait a few minutes before starting a session.
+The numbers F-005 and F-006 are not reused.
 
-## F-006: Media images did not load through CloudFront
+## F-007: GuardDuty could not be turned on in the management account from the Security account
 
-**What happened:** Images uploaded through the admin page were saved to S3 but showed as broken on the public site.
+**Found during:** adding every account to GuardDuty from the Security account (the delegated administrator)
+**Severity:** Medium (the account with the most power in the organisation was not monitored)
 
-**Cause 1: wrong S3 address.** The CloudFront S3 origin used the global S3 endpoint (`bucket.s3.amazonaws.com`). S3 answered with `307` and `AuthorizationHeaderMalformed`: the request was signed for `eu-west-2` but reached the `us-east-1` endpoint.
-**Fix 1:** The origin was changed to the regional endpoint (`bucket.s3.eu-west-2.amazonaws.com`).
+**What happened:** The Dev account joined GuardDuty automatically, but adding the management account as a member from the Security account failed.
 
-**Cause 2: one wrong character in the bucket policy.** The distribution ID contains the letter `O`. The bucket policy was typed with a zero (`0`), so the `AWS:SourceArn` condition never matched and S3 returned `403 AccessDenied`.
-**Fix 2:** The policy was corrected using the ID returned by `aws cloudfront list-distributions`.
+**Cause:** The delegated administrator can manage member accounts, but it cannot turn GuardDuty on in the management account. "Auto-enable" applies to member accounts only. The management account has to create its own GuardDuty detector first.
 
-**Evidence of the final state:** The image returns `200` through CloudFront and `403` when requested directly from S3. The bucket stays private and is readable only through the distribution.
+**Fix:** A detector was created in the management account with its own Admin role:
 
-**Lessons:**
-- Always use the regional S3 endpoint for CloudFront origins. In Terraform, use `bucket_regional_domain_name`.
-- Never type resource IDs by hand. Copy them from the CLI or console. In Terraform, reference the distribution's `.arn` directly.
-- The error came from the policy failing closed: a mistake blocked all access instead of opening it.
+```bash
+aws guardduty create-detector --enable --profile mgmt-admin
+```
+
+The management account was then added as a member from the Security account, and is now managed there with the other accounts.
+
+**Evidence:** [GuardDuty members and plans](evidence/README.md#threat-detection)
+
+**Lesson:** The management account is a special case for many organisation features. SCPs do not apply to it either (D-004). After turning on any organisation-wide service, the management account should be checked on its own.
+
 ## F-008: Read-only Auditor role could not read CloudFront function code
 
 **What happened:** The Terraform import of the portfolio workload, run with the read-only `dev-audit` profile, failed with `AccessDenied` on `cloudfront:DescribeFunction`.

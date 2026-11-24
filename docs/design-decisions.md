@@ -52,6 +52,8 @@ project still apply.
 | Audit account | Security account with delegated security administration and audit access |
 | Account Factory | AWS Organizations account creation with OU, tag and SCP controls |
 
+**Evidence:** [organisation structure](evidence/README.md#accounts-and-root-access)
+
 ## D-002: Using one Security account for logs and security tooling
 
 **Decision:** A single Security account is used for the central CloudTrail log bucket and
@@ -84,6 +86,8 @@ protected separately.
 **Break-glass access:** The management account root user is protected with MFA. Root
 sign-in activity is monitored with an EventBridge alert.
 
+**Evidence:** [Identity Center, MFA and group access](evidence/README.md#identity)
+
 ## D-004: Restrict all activity to eu-west-2
 
 **Decision:** Use an SCP to deny all actions outside eu-west-2 in member accounts, while
@@ -105,21 +109,49 @@ are denied too.
 The management account is not covered by this SCP because SCPs do not apply to the AWS
 Organizations management account.
 
+**Evidence:** [SCP test B](evidence/README.md#guardrails-scps-and-tag-policy), [F-003 central logs](evidence/README.md#logging)
+
 ## D-005: GuardDuty enabled for the whole organisation, managed from the Security account
 
-**Decision:** GuardDuty is enabled in eu-west-2 for every account in the organisation. The Security account is the delegated administrator, so all findings are viewed and managed there.
+**Decision:** GuardDuty is enabled in eu-west-2 for every account in the organisation. The Security account is the delegated administrator, so all findings are viewed and managed there. Auto-enable is set for all accounts, so a new account joins with GuardDuty already on.
 
-**Enabled:** foundational detection (CloudTrail, VPC flow logs, DNS logs), S3 Protection, EKS audit log monitoring, RDS protection and Lambda protection. Plans with nothing to monitor cost nothing, and they protect any future resource from the start.
+**Enabled:** foundational detection (CloudTrail management events, VPC flow logs and DNS logs) and S3 Protection. Together these cover everything that runs today.
 
-**Not enabled:**
-- Runtime Monitoring (EC2, ECS, EKS and its infrastructure): it installs an agent on servers and creates VPC endpoints, which would change the network design and add cost.
+**Not enabled:** each of these can be turned on from the Security account when a workload needs it.
+
+- EKS audit logs, RDS login events and Lambda network logs: no EKS, RDS or Lambda is in use.
+- Runtime Monitoring (EC2, ECS, EKS): it installs an agent on servers and creates VPC endpoints, which would change the network design and add cost.
+- Malware Protection for EC2: extra cost per scan. Foundational detection still raises findings.
 - AI Protection: no AI services are in use, and it adds a CloudTrail service-linked channel to every account.
-
-These can be enabled when a workload needs them.
 
 **Why the Security account:** threat detection is managed outside the management account, which follows the same separation as D-002.
 
+**Management account:** it cannot be enrolled by the delegated administrator and had to turn GuardDuty on itself first (F-007).
+
 **Cost control:** each account has a 30-day free trial. The GuardDuty Usage page is reviewed before the trial ends.
+
+**Evidence:** [GuardDuty members, plans and sample findings](evidence/README.md#threat-detection)
+
+## D-006: Prowler on demand instead of Security Hub and AWS Config
+
+**Decision:** Security settings are checked with Prowler, run on demand with the read-only Auditor role, instead of turning on AWS Security Hub and AWS Config across the organisation.
+
+**Why:**
+
+- Security Hub and Config are charged for every check and every recorded resource change, in every account and every region where they run. For a short-lived project with a small budget, they would be one of the largest ongoing costs.
+- Prowler is free, runs the same CIS benchmark checks, and needs only read access.
+- GuardDuty and the organisation CloudTrail trail still run all the time, so threat detection and the audit trail do not depend on scans.
+
+**Trade-offs:**
+
+- Settings that drift between scans are not noticed until the next scan.
+- There is no history of how each resource's settings changed over time (the AWS Config timeline).
+- Prowler's Security Hub and AWS Config checks fail. They are deferred, each with a plan, in [prowler-triage.md](prowler-triage.md#deferred-with-a-plan).
+- `scp-protect-security` already stops Config and Security Hub from being turned off, so they are protected as soon as they are turned on.
+
+**In production:** Security Hub and Config would be enabled for the whole organisation, with the Security account as delegated administrator, the CIS standard turned on, and findings from every account collected in eu-west-2.
+
+**Evidence:** [Prowler scans before and after fixes](evidence/README.md#security-review-prowler)
 
 ## D-007: Terraform state is stored locally, one state per project
 
@@ -176,3 +208,5 @@ These can be enabled when a workload needs them.
 | Identity Center users and groups | Personal data; groups are looked up by name instead |
 | IMDS account defaults | Cannot be imported; managing them requires a write |
 | Parameter Store values | Secrets would be stored in plain text in the state (D-007) |
+
+**Evidence:** [Terraform import results](evidence/README.md#terraform-import)
