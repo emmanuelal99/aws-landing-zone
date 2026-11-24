@@ -120,3 +120,59 @@ These can be enabled when a workload needs them.
 **Why the Security account:** threat detection is managed outside the management account, which follows the same separation as D-002.
 
 **Cost control:** each account has a 30-day free trial. The GuardDuty Usage page is reviewed before the trial ends.
+
+## D-007: Terraform state is stored locally, one state per project
+
+**Decision:** Each project has its own Terraform state file, kept on the local machine and never committed: one for the landing zone and one for the portfolio workload.
+
+**Why two states:**
+
+- A `terraform destroy` in the portfolio cannot touch the landing zone, and the reverse.
+- Each project can be planned, reviewed and changed on its own, the same way a platform team and an application team work.
+- The portfolio reads the landing zone network through data sources (by tag) and never manages it.
+
+**Why local state:**
+
+- The environment is short-lived and will be torn down after the project.
+- A remote backend needs its own bucket and access controls to be set up first, which adds work without adding value for a single operator.
+
+**Risks and how they are handled:**
+
+| Risk | Handling |
+|---|---|
+| State contains account IDs, email addresses and every resource setting | `*.tfstate`, `*.tfstate.*` and `*.tfvars` are git-ignored; the disk is encrypted |
+| State could contain secrets | Parameter Store SecureString values are deliberately not managed by Terraform |
+| Losing the state file | Terraform keeps a backup copy; every resource can be imported again |
+| No locking | One operator only |
+
+**In production:** state would live in an S3 backend in a dedicated account, with versioning, KMS encryption, state locking (`use_lockfile`), and access limited to the deployment roles.
+
+## D-008: How the existing environment was brought into Terraform
+
+**Decision:** Everything built in the console was imported into Terraform without changing it, using read-only roles, in small stages.
+
+**How:**
+
+1. **Read-only by default.** Each AWS profile is a Terraform variable whose default is an audit (read-only) role. A write role is chosen on the command line for one account and one change only, for example `-var security_profile=sec-admin`. A normal `terraform plan` can never change anything.
+2. **Inventory first.** Before each stage, read-only CLI commands listed exactly what existed. Only existing resources were imported; missing settings were recorded as gaps.
+3. **Import blocks and generated code.** `import` blocks with `terraform plan -generate-config-out` produced a first draft of the code. The draft was then rewritten by hand: computed and empty values removed, IDs replaced with references, and comments added.
+4. **Import as found, change separately.** Every import had to show `0 to change` before it was applied. Gaps found during inventory (for example F-009) were imported as they were and fixed afterwards as separate, reviewed changes.
+5. **Saved plans.** Each import was applied from a saved plan (`-out`), so exactly the reviewed actions were carried out, once.
+6. **Verify, then tidy.** After each import, a second plan had to show `No changes`. The temporary `imports.tf` was then deleted before committing.
+
+**What the code avoids:**
+
+- **No IDs typed by hand.** Resources refer to each other (for example, a bucket policy uses the distribution's `.arn`). This prevents the mistake in finding P-002 of the portfolio project.
+- **No account IDs or email addresses in public code.** They come from resources, data sources, or the git-ignored `terraform.tfvars`.
+- **Protected resources.** The organisation, member accounts, the CloudTrail log bucket and the Admin permission set have `prevent_destroy`, so a careless plan cannot remove them.
+
+**Deliberately not managed by Terraform:**
+
+| Item | Reason |
+|---|---|
+| The management account itself | Terraform runs from it, and it cannot be closed or removed like a member account |
+| Member GuardDuty detectors | Controlled by the organisation setting "auto-enable ALL"; managing them one by one would conflict |
+| GuardDuty per-plan settings | Not reliably importable; can be adopted later by applying the same values |
+| Identity Center users and groups | Personal data; groups are looked up by name instead |
+| IMDS account defaults | Cannot be imported; managing them requires a write |
+| Parameter Store values | Secrets would be stored in plain text in the state (D-007) |

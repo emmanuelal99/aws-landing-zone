@@ -147,3 +147,16 @@ rather than exposing the subnet.
 - Taking inventory for infrastructure as code finds configuration gaps that were missed during manual setup.
 - Import first, change second. Keeping the two apart makes every change visible and reviewable.
 - Read-only access is the default for Terraform in this project. Write access is chosen per account, per change.
+
+## F-010: Read-only Auditor role could not read budgets or cost anomaly alerts
+
+**What happened:** While taking stock of the cost guardrails for the Terraform import, the read-only `mgmt-audit` profile returned `AccessDenied` on `budgets:ViewBudget`, `ce:GetAnomalyMonitors` and `ce:GetAnomalySubscriptions`.
+
+**Cause:** The Auditor permission set uses the AWS managed policies `SecurityAudit` and `ViewOnlyAccess`. Both leave out billing and cost data, which AWS treats as a separate area of access.
+
+**Fix:** A second statement, `ReadCostGuardrails`, was added to the Auditor inline policy with five read-only actions: `budgets:ViewBudget`, `budgets:ListTagsForResource`, `ce:GetAnomalyMonitors`, `ce:GetAnomalySubscriptions` and `ce:ListTagsForResource`. The Auditor can review the guardrails but cannot change them, and has no access to invoices or payment details.
+
+**Lessons:**
+
+- This is the same pattern as F-008: read-only managed policies have deliberate gaps, and some reviews need specific extra read actions.
+- Adding only the exact actions needed keeps the role narrow. A broad policy such as `Billing` or `ReadOnlyAccess` would also have fixed the error, but would have given far more access than the task needed.
