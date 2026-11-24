@@ -106,7 +106,6 @@ Each choice is recorded with its reasons and trade-offs ([design-decisions.md](d
 ```
 policies/scp/       Service control policies (source for Terraform)
 policies/tag/       Tag policy (source for Terraform)
-policies/resource/  Resource policies, with IDs redacted
 scripts/            nat-on.sh and nat-off.sh
 terraform/          Terraform code for the whole landing zone
 docs/               Design decisions, findings, Prowler triage, onboarding guide
