@@ -60,10 +60,10 @@ resource "aws_s3_account_public_access_block" "security" {
   restrict_public_buckets = true
 }
 
-# Imported as found: off (finding F-009). Enabled as a separate change.
+# Was off when imported (finding F-009). Enabled through Terraform.
 resource "aws_ebs_encryption_by_default" "security" {
   provider = aws.security
-  enabled  = false
+  enabled  = true
 }
 
 # ---------------------------------------------------------------------------

@@ -1,19 +1,19 @@
-# Dev account, read-only during import
+# Dev account (default provider)
 provider "aws" {
   region  = "eu-west-2"
-  profile = "dev-audit"
+  profile = var.dev_profile
 }
 
-# Management account, read-only during import
+# Management account
 provider "aws" {
   alias   = "mgmt"
   region  = "eu-west-2"
-  profile = "mgmt-audit"
+  profile = var.mgmt_profile
 }
 
-# Security account, read-only during import
+# Security account
 provider "aws" {
   alias   = "security"
   region  = "eu-west-2"
-  profile = "sec-audit"
+  profile = var.security_profile
 }
