@@ -20,3 +20,15 @@ variable "security_profile" {
   type        = string
   default     = "sec-audit"
 }
+
+# Account root emails. Values live in terraform.tfvars, which is git-ignored,
+# so the addresses are never published.
+variable "security_account_email" {
+  description = "Root email address of the Security account"
+  type        = string
+}
+
+variable "dev_account_email" {
+  description = "Root email address of the Dev account"
+  type        = string
+}
