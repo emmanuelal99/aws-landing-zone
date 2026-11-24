@@ -4,6 +4,8 @@ A secure, multi-account AWS foundation built with AWS Organizations, IAM Identit
 
 The first workload running on it is a Django portfolio site: [secure-django-portfolio](https://github.com/emmanuelal99/secure-django-portfolio).
 
+**Status:** built and verified in November 2026, then torn down with Terraform to avoid ongoing cost. The Terraform code in this repository can rebuild it.
+
 **Evidence:** screenshots of every control working are in the [evidence gallery](docs/evidence/README.md).
 
 ## Architecture
