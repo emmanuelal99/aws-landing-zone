@@ -119,3 +119,31 @@ rather than exposing the subnet.
 - Always use the regional S3 endpoint for CloudFront origins. In Terraform, use `bucket_regional_domain_name`.
 - Never type resource IDs by hand. Copy them from the CLI or console. In Terraform, reference the distribution's `.arn` directly.
 - The error came from the policy failing closed: a mistake blocked all access instead of opening it.
+## F-008: Read-only Auditor role could not read CloudFront function code
+
+**What happened:** The Terraform import of the portfolio workload, run with the read-only `dev-audit` profile, failed with `AccessDenied` on `cloudfront:DescribeFunction`.
+
+**Cause:** AWS read-only managed policies leave out the actions that return CloudFront function code, because function code can contain sensitive logic.
+
+**Fix:** Two read-only actions, `cloudfront:DescribeFunction` and `cloudfront:GetFunction`, were added to the Auditor permission set's inline policy. The Auditor still cannot change or publish functions.
+
+**Lesson:** Read-only roles may need specific extra read permissions to review resources that contain code. Adding only the exact actions needed keeps the import read-only without widening access.
+
+## F-009: EBS encryption by default was off in the Security account
+
+**What happened:** While taking stock of account-wide settings for the Terraform import, EBS encryption by default was found to be **off** in the Security account. It was on in the management and Dev accounts.
+
+**Risk:** No volumes existed in the Security account, so nothing was unencrypted. Any volume created later would have been unencrypted unless encryption was chosen by hand.
+
+**How it was handled:**
+
+1. The setting was **imported as found** (`enabled = false`), so the import recorded reality exactly.
+2. The code was changed to `enabled = true` and reviewed in a **read-only** plan first, which showed exactly one change.
+3. The change was applied with a **write role for the Security account only** (`-var security_profile=sec-admin`). The other accounts stayed on their read-only roles.
+4. The result was confirmed independently with the read-only role, and a final plan showed no changes.
+
+**Lessons:**
+
+- Taking inventory for infrastructure as code finds configuration gaps that were missed during manual setup.
+- Import first, change second. Keeping the two apart makes every change visible and reviewable.
+- Read-only access is the default for Terraform in this project. Write access is chosen per account, per change.
