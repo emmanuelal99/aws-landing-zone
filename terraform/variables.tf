@@ -32,3 +32,14 @@ variable "dev_account_email" {
   description = "Root email address of the Dev account"
   type        = string
 }
+
+# Alert recipients. Values live in terraform.tfvars (git-ignored).
+variable "budget_alert_emails" {
+  description = "Email addresses that receive budget alerts"
+  type        = list(string)
+}
+
+variable "anomaly_alert_emails" {
+  description = "Email addresses that receive cost anomaly alerts"
+  type        = list(string)
+}
